@@ -1,0 +1,14 @@
+[build]
+  base = "light-version"
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "22.5.0"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+[context.production.environment]
+  SITE_URL = "https://almukhtasar.netlify.app"

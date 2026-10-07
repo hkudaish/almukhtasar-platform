@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npm run build",
+  "crons": [
+    { "path": "/api/cron/retrieval", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/archive", "schedule": "15 2 * * *" }
+  ]
+}

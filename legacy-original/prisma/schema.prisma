@@ -1,0 +1,410 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ArticleStatus {
+  IMPORTED
+  PROCESSING
+  DRAFT
+  REVIEW
+  FACT_CHECK
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+  CORRECTED
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  passwordHash String
+  roles       UserRole[]
+  articles    Article[] @relation("ArticleAuthor")
+  reviews     EditorialReview[]
+  factChecks  FactCheck[]
+  saved       SavedArticle[]
+  comments    Comment[]
+  auditLogs   AuditLog[]
+  preferences UserPreference?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Role {
+  id          String @id @default(cuid())
+  name        String @unique
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id    String @id @default(cuid())
+  key   String @unique
+  roles RolePermission[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  role   Role @relation(fields:[roleId], references:[id], onDelete:Cascade)
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role @relation(fields:[roleId], references:[id], onDelete:Cascade)
+  permission   Permission @relation(fields:[permissionId], references:[id], onDelete:Cascade)
+  @@id([roleId, permissionId])
+}
+
+model Article {
+  id          String @id @default(cuid())
+  slug        String @unique
+  title       String
+  excerpt     String?
+  content     Json
+  status      ArticleStatus @default(DRAFT)
+  categoryId  String
+  authorId    String?
+  sourceId    String?
+  originalUrl String?
+  originalPublishedAt DateTime?
+  copyrightNote String?
+  publishedAt DateTime?
+  lastUpdatedAt DateTime?
+  aiAssisted  Boolean @default(false)
+  confidence  Int?
+  category    Category @relation(fields:[categoryId], references:[id])
+  author      User? @relation("ArticleAuthor", fields:[authorId], references:[id])
+  source      Source? @relation(fields:[sourceId], references:[id])
+  sourceLinks ArticleSource[]
+  versions    ArticleVersion[]
+  tags        ArticleTag[]
+  reviews     EditorialReview[]
+  corrections Correction[]
+  factChecks  FactCheck[]
+  media       Media[]
+  savedBy     SavedArticle[]
+  comments    Comment[]
+  analytics   AnalyticsEvent[]
+  socialPosts SocialPost[]
+  seo         SeoMetadata?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ArticleVersion {
+  id        String @id @default(cuid())
+  articleId String
+  version   Int
+  title     String
+  content   Json
+  changedBy String?
+  article   Article @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  createdAt DateTime @default(now())
+  @@unique([articleId, version])
+}
+
+model Category {
+  id       String @id @default(cuid())
+  name     String
+  slug     String @unique
+  parentId String?
+  parent   Category? @relation("CategoryTree", fields:[parentId], references:[id])
+  children Category[] @relation("CategoryTree")
+  articles Article[]
+}
+
+model Tag {
+  id       String @id @default(cuid())
+  name     String @unique
+  slug     String @unique
+  articles ArticleTag[]
+}
+
+model ArticleTag {
+  articleId String
+  tagId     String
+  article   Article @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  tag       Tag @relation(fields:[tagId], references:[id], onDelete:Cascade)
+  @@id([articleId,tagId])
+}
+
+model Source {
+  id          String @id @default(cuid())
+  name        String
+  englishName String?
+  type        String
+  url         String?
+  logoUrl     String?
+  feedUrl     String?
+  apiUrl      String?
+  country     String? @default("السعودية")
+  language    String? @default("العربية")
+  categories  String[]
+  geography   String?
+  contentTypes String[]
+  tier        String?
+  priority    Int @default(5)
+  trustScore  Int @default(50)
+  updateFrequency String?
+  maxItems    Int @default(30)
+  publicationMode String @default("مسودة")
+  sensitiveReview Boolean @default(true)
+  copyrightMode String?
+  lastSuccessAt DateTime?
+  lastError    String?
+  enabled     Boolean @default(true)
+  articles    Article[]
+  articleLinks ArticleSource[]
+  refreshRuns SourceRefreshRun[]
+  rules       SourceRule[]
+  imported    ImportedItem[]
+}
+
+model ArticleSource {
+  articleId   String
+  sourceId    String
+  role        String @default("داعم")
+  originalUrl String
+  publishedAt DateTime?
+  article     Article @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  source      Source @relation(fields:[sourceId], references:[id], onDelete:Cascade)
+  @@id([articleId, sourceId])
+}
+
+model SourceRefreshRun {
+  id          String @id @default(cuid())
+  sourceId    String?
+  status      String
+  report      Json
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+  source      Source? @relation(fields:[sourceId], references:[id], onDelete:SetNull)
+}
+
+model SourceRule {
+  id            String @id @default(cuid())
+  sourceId      String
+  categoryId    String?
+  keywords      String[]
+  excludedWords String[]
+  language      String?
+  country       String?
+  schedule      String?
+  source        Source @relation(fields:[sourceId], references:[id], onDelete:Cascade)
+}
+
+model ImportedItem {
+  id          String @id @default(cuid())
+  sourceId    String
+  externalId  String?
+  originalUrl String
+  title       String
+  rawContent  String?
+  fingerprint String?
+  status      String
+  rejectionReason String?
+  source      Source @relation(fields:[sourceId], references:[id])
+  importedAt  DateTime @default(now())
+}
+
+model EditorialReview {
+  id        String @id @default(cuid())
+  articleId String
+  reviewerId String
+  decision  String
+  notes     String?
+  article   Article @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  reviewer  User @relation(fields:[reviewerId], references:[id])
+  createdAt DateTime @default(now())
+}
+
+model Correction {
+  id        String @id @default(cuid())
+  articleId String
+  summary   String
+  details   String
+  article   Article @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  createdAt DateTime @default(now())
+}
+
+model SeoMetadata {
+  id          String @id @default(cuid())
+  articleId   String @unique
+  metaTitle   String?
+  description String?
+  canonical   String?
+  noindex     Boolean @default(false)
+  article     Article @relation(fields:[articleId], references:[id], onDelete:Cascade)
+}
+
+model ScheduledJob {
+  id        String @id @default(cuid())
+  name      String
+  type      String
+  cron      String
+  enabled   Boolean @default(true)
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+  runs      JobRun[]
+}
+
+model AuditLog {
+  id        String @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  user      User? @relation(fields:[userId], references:[id], onDelete:SetNull)
+  createdAt DateTime @default(now())
+}
+
+model Author {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  bio       String?
+  avatarUrl String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Media {
+  id          String   @id @default(cuid())
+  articleId   String?
+  type        String
+  url         String
+  altText     String?
+  credit      String?
+  aiGenerated Boolean  @default(false)
+  article     Article? @relation(fields:[articleId], references:[id], onDelete:SetNull)
+  createdAt   DateTime @default(now())
+}
+
+model JobRun {
+  id             String   @id @default(cuid())
+  jobId          String
+  status         String
+  foundCount     Int      @default(0)
+  acceptedCount  Int      @default(0)
+  rejectedCount  Int      @default(0)
+  duplicateCount Int      @default(0)
+  errors         Json?
+  startedAt      DateTime @default(now())
+  completedAt    DateTime?
+  job            ScheduledJob @relation(fields:[jobId], references:[id], onDelete:Cascade)
+}
+
+model FactCheck {
+  id         String   @id @default(cuid())
+  articleId  String
+  reviewerId String
+  verdict    String
+  evidence   Json
+  notes      String?
+  article    Article  @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  reviewer   User     @relation(fields:[reviewerId], references:[id])
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  type      String
+  title     String
+  body      String
+  channel   String
+  status    String   @default("PENDING")
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Newsletter {
+  id          String   @id @default(cuid())
+  name        String
+  frequency   String
+  subject     String?
+  content     Json?
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  status      String   @default("DRAFT")
+  createdAt   DateTime @default(now())
+}
+
+model UserPreference {
+  id                    String  @id @default(cuid())
+  userId                String  @unique
+  language              String  @default("ar")
+  preferredCategories   String[]
+  followedTopics        String[]
+  notificationSettings  Json?
+  user                  User    @relation(fields:[userId], references:[id], onDelete:Cascade)
+}
+
+model SavedArticle {
+  userId    String
+  articleId String
+  user      User     @relation(fields:[userId], references:[id], onDelete:Cascade)
+  article   Article  @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  createdAt DateTime @default(now())
+  @@id([userId,articleId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  articleId String
+  userId    String?
+  body      String
+  status    String   @default("PENDING")
+  article   Article  @relation(fields:[articleId], references:[id], onDelete:Cascade)
+  user      User?    @relation(fields:[userId], references:[id], onDelete:SetNull)
+  createdAt DateTime @default(now())
+}
+
+model Advertisement {
+  id        String   @id @default(cuid())
+  name      String
+  placement String
+  creative  Json
+  enabled   Boolean  @default(false)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  articleId String?
+  sessionId String?
+  type      String
+  metadata  Json?
+  article   Article? @relation(fields:[articleId], references:[id], onDelete:SetNull)
+  createdAt DateTime @default(now())
+  @@index([type,createdAt])
+}
+
+model SocialPost {
+  id          String   @id @default(cuid())
+  articleId   String?
+  platform    String
+  content     String
+  mediaUrl    String?
+  trackingUrl String?
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  status      String   @default("DRAFT")
+  article     Article? @relation(fields:[articleId], references:[id], onDelete:SetNull)
+  createdAt   DateTime @default(now())
+}

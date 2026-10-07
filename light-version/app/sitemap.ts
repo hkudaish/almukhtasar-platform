@@ -1,0 +1,6 @@
+import type { MetadataRoute } from "next";
+import { archiveFacets, database, listIndexableTags } from "@/database/database";
+export default function sitemap():MetadataRoute.Sitemap{
+  const base=process.env.SITE_URL||"http://localhost:3000",articles=database.prepare("SELECT slug,updated_at FROM articles WHERE publication_status='published' ORDER BY source_published_at DESC LIMIT 5000").all() as Array<{slug:string;updated_at:string}>,categories=database.prepare("SELECT DISTINCT main_category category FROM articles WHERE publication_status='published'").all() as Array<{category:string}>,archive=archiveFacets();
+  return [{url:base,changeFrequency:"hourly",priority:1},{url:`${base}/archive`,changeFrequency:"daily",priority:.7},...categories.map((item)=>({url:`${base}/category/${encodeURIComponent(item.category)}`,changeFrequency:"hourly" as const,priority:.8})),...listIndexableTags().map((item)=>({url:`${base}/tag/${encodeURIComponent(item.tag)}`,lastModified:new Date(item.updated_at),changeFrequency:"daily" as const,priority:.65})),...articles.map((item)=>({url:`${base}/news/${item.slug}`,lastModified:new Date(item.updated_at),changeFrequency:"daily" as const,priority:.8})),...[...new Set(archive.map((item)=>`${item.year}/${item.month}/${item.day}`))].map((date)=>({url:`${base}/archive/${date}`,changeFrequency:"monthly" as const,priority:.5}))];
+}

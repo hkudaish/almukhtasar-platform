@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function Pagination({page,pages,href}:{page:number;pages:number;href:(page:number)=>string}){if(pages<=1)return null;return <nav className="pagination pagination-more" aria-label="المزيد من الأخبار">{page>1?<Link className="pagination-previous" href={href(page-1)}>السابق</Link>:null}{page<pages?<Link className="pagination-load-more" href={href(page+1)}>المزيد من الأخبار <span aria-hidden="true">↓</span></Link>:<span className="pagination-end">تم عرض جميع الأخبار</span>}</nav>;}

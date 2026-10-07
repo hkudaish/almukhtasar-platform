@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server";
+export async function POST(request: Request) { try { const body = await request.json(); const email = typeof body.email === "string" ? body.email.trim() : ""; if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: "INVALID_EMAIL" }, { status: 400 }); return NextResponse.json({ data: { accepted: true, preference: "morning" } }, { status: 202 }); } catch { return NextResponse.json({ error: "INVALID_BODY" }, { status: 400 }); } }

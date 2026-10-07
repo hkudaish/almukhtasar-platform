@@ -1,0 +1,14 @@
+{
+  "name": "almukhtasar-platform",
+  "version": "2.0.0",
+  "private": true,
+  "workspaces": ["light-version"],
+  "scripts": {
+    "dev": "npm --workspace light-news run dev",
+    "build": "npm --workspace light-news run build",
+    "start": "npm --workspace light-news run start",
+    "typecheck": "npm --workspace light-news run typecheck",
+    "test": "npm --workspace light-news run test"
+  },
+  "engines": { "node": ">=22.5.0" }
+}
