@@ -3,6 +3,9 @@ const nextConfig={
   reactStrictMode:true,
   ...(process.env.BUILD_STANDALONE ? { output: "standalone" } : {}),
   images:{
+    dangerouslyAllowSVG:true,
+    contentDispositionType:"inline",
+    contentSecurityPolicy:"default-src 'self'; script-src 'none'; sandbox;",
     formats:["image/avif","image/webp"],
     qualities:[55,75],
     deviceSizes:[360,640,750,828,1080,1200],

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image, { ImageProps } from "next/image";
 
 interface NewsImageProps extends Omit<ImageProps, "src" | "alt" | "onError"> {
@@ -18,16 +18,41 @@ export default function NewsImage({
   className,
   ...props
 }: NewsImageProps) {
-  const defaultFallback = fallbackSrc || `/api/media/fallback/${encodeURIComponent(category || "عام")}`;
-  const initialSrc = src && src.trim() !== "" ? src : defaultFallback;
+  const getFallback = () =>
+    fallbackSrc || `/api/media/fallback/${encodeURIComponent(category || "عام")}`;
 
-  const [imgSrc, setImgSrc] = useState<string>(initialSrc);
+  const cleanSrc = (url?: string | null) => {
+    if (!url || typeof url !== "string") return null;
+    const trimmed = url.trim();
+    if (
+      !trimmed ||
+      trimmed === "null" ||
+      trimmed === "undefined" ||
+      trimmed === "none"
+    ) {
+      return null;
+    }
+    return trimmed;
+  };
+
+  const validInitial = cleanSrc(src) || getFallback();
+
+  const [imgSrc, setImgSrc] = useState<string>(validInitial);
   const [hasError, setHasError] = useState<boolean>(false);
 
+  useEffect(() => {
+    const nextValid = cleanSrc(src) || getFallback();
+    setImgSrc(nextValid);
+    setHasError(false);
+  }, [src, category, fallbackSrc]);
+
   const handleError = () => {
-    if (!hasError && imgSrc !== defaultFallback) {
+    const fallback = getFallback();
+    if (imgSrc !== fallback) {
       setHasError(true);
-      setImgSrc(defaultFallback);
+      setImgSrc(fallback);
+    } else if (imgSrc !== "/images/placeholder.svg") {
+      setImgSrc("/images/placeholder.svg");
     }
   };
 
@@ -38,8 +63,14 @@ export default function NewsImage({
       alt={alt}
       className={className}
       onError={handleError}
-      unoptimized={imgSrc.startsWith("http") || imgSrc.endsWith(".svg") || imgSrc.includes("/api/media/")}
+      unoptimized={
+        imgSrc.startsWith("http") ||
+        imgSrc.endsWith(".svg") ||
+        imgSrc.includes("/api/media/") ||
+        imgSrc === "/images/placeholder.svg"
+      }
       referrerPolicy="no-referrer"
     />
   );
 }
+

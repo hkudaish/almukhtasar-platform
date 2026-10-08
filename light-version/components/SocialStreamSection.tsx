@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import NewsImage from "@/components/NewsImage";
 import type { SocialPost } from "@/types/news";
 
 export default function SocialStreamSection({
@@ -74,13 +74,14 @@ export default function SocialStreamSection({
                   <div className="social-author-info">
                     <div className="social-author-avatar">
                       {post.authorAvatarUrl ? (
-                        <Image
+                        <NewsImage
                           src={post.authorAvatarUrl}
                           alt={post.authorName}
                           width={42}
                           height={42}
-                          unoptimized
-                          referrerPolicy="no-referrer"
+                          fallbackSrc="/images/placeholder.svg"
+                          category="منصات"
+                          style={{ borderRadius: "50%", objectFit: "cover" }}
                         />
                       ) : (
                         <span>{post.authorName ? post.authorName.charAt(0) : "𝕏"}</span>
@@ -124,14 +125,15 @@ export default function SocialStreamSection({
 
                 {mediaUrl ? (
                   <div className="social-card-media">
-                    <Image
+                    <NewsImage
                       src={mediaUrl}
                       alt={post.content.slice(0, 50)}
                       width={500}
                       height={260}
                       loading="lazy"
-                      unoptimized={mediaUrl.startsWith("http")}
-                      referrerPolicy="no-referrer"
+                      category="منصات"
+                      fallbackSrc="/api/media/fallback/منصات"
+                      style={{ objectFit: "cover", width: "100%", height: "100%" }}
                     />
                     {post.mediaType === "video" ? (
                       <span className="media-type-tag">▶ فيديو / ريلز</span>
