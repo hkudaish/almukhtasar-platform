@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdirSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { DEFAULT_SETTINGS } from "@/config/defaults";
@@ -10,16 +10,64 @@ import { balanceCategories, classifyGeography, scoreEditorialPriority } from "@/
 import { extractSemanticTags } from "@/lib/semantic-tags";
 import type { Article, ArchiveStatus, QueueName, SiteSettings, Source, SocialPost, TrendTopic, DailyBrief } from "@/types/news";
 
-const databasePath=path.resolve(process.cwd(),process.env.DATABASE_PATH||"database/light-news.db");
-mkdirSync(path.dirname(databasePath),{recursive:true});
-const db=new DatabaseSync(databasePath);
-db.exec("PRAGMA busy_timeout=30000; PRAGMA foreign_keys=ON;");
-const journalMode=db.prepare("PRAGMA journal_mode").get() as {journal_mode:string};
-if(String(journalMode.journal_mode).toLowerCase()!=="wal")db.exec("PRAGMA journal_mode=WAL;");
+function initDatabase(): DatabaseSync {
+  let databasePath = path.resolve(process.cwd(), process.env.DATABASE_PATH || "database/light-news.db");
+  const isServerless = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT);
+
+  if (isServerless) {
+    const tmpDb = "/tmp/light-news.db";
+    if (!existsSync(tmpDb)) {
+      const candidates = [
+        path.resolve(process.cwd(), "database/light-news.db"),
+        path.resolve(process.cwd(), "light-version/database/light-news.db"),
+        path.resolve(process.cwd(), "../database/light-news.db"),
+        path.resolve(process.env.LAMBDA_TASK_ROOT || "", "database/light-news.db"),
+        path.resolve(process.env.LAMBDA_TASK_ROOT || "", "light-version/database/light-news.db"),
+        path.resolve(process.env.LAMBDA_TASK_ROOT || "", "src/database/light-news.db"),
+        path.resolve(process.env.LAMBDA_TASK_ROOT || "", ".next/server/database/light-news.db"),
+        path.resolve(__dirname, "database/light-news.db"),
+        path.resolve(__dirname, "../database/light-news.db"),
+        path.resolve(__dirname, "../../database/light-news.db"),
+        path.resolve(__dirname, "../../../database/light-news.db")
+      ];
+      for (const candidate of candidates) {
+        if (existsSync(candidate)) {
+          try {
+            copyFileSync(candidate, tmpDb);
+            if (existsSync(`${candidate}-wal`)) {
+              try { copyFileSync(`${candidate}-wal`, `${tmpDb}-wal`); } catch {}
+            }
+            if (existsSync(`${candidate}-shm`)) {
+              try { copyFileSync(`${candidate}-shm`, `${tmpDb}-shm`); } catch {}
+            }
+            break;
+          } catch {}
+        }
+      }
+    }
+    databasePath = tmpDb;
+  } else {
+    try {
+      mkdirSync(path.dirname(databasePath), { recursive: true });
+    } catch {}
+  }
+
+  const dbInstance = new DatabaseSync(databasePath);
+  try {
+    dbInstance.exec("PRAGMA busy_timeout=30000; PRAGMA foreign_keys=ON;");
+    const journalMode = dbInstance.prepare("PRAGMA journal_mode").get() as { journal_mode: string };
+    if (String(journalMode?.journal_mode).toLowerCase() !== "wal") {
+      dbInstance.exec("PRAGMA journal_mode=WAL;");
+    }
+  } catch {}
+  return dbInstance;
+}
+
+const db = initDatabase();
 
 try {
-  const socialInfo=db.prepare("PRAGMA table_info(social_posts)").all() as Array<{name:string}>;
-  if(socialInfo.length>0&&!socialInfo.some((c)=>c.name==="post_id")){
+  const socialInfo = db.prepare("PRAGMA table_info(social_posts)").all() as Array<{ name: string }>;
+  if (socialInfo.length > 0 && !socialInfo.some((c) => c.name === "post_id")) {
     db.exec("ALTER TABLE social_posts RENAME TO legacy_social_posts;");
   }
 } catch {}
