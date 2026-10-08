@@ -7,8 +7,7 @@
   package = "@netlify/plugin-nextjs"
 
 [build.environment]
-  NODE_VERSION = "22.5.0"
-  NPM_FLAGS = "--legacy-peer-deps"
+  NODE_VERSION = "22"
 
 [context.production.environment]
   SITE_URL = "https://almukhtasar.netlify.app"
