@@ -4,7 +4,7 @@
   publish = ".next"
 
 [functions]
-  included_files = ["database/light-news.db", "database/**", "light-version/database/**"]
+  included_files = ["database/light-news.db"]
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

@@ -11,24 +11,22 @@ import { extractSemanticTags } from "@/lib/semantic-tags";
 import type { Article, ArchiveStatus, QueueName, SiteSettings, Source, SocialPost, TrendTopic, DailyBrief } from "@/types/news";
 
 function initDatabase(): DatabaseSync {
-  let databasePath = path.resolve(process.cwd(), process.env.DATABASE_PATH || "database/light-news.db");
-  const isServerless = Boolean(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT);
+  const defaultPath = path.resolve(process.cwd(), process.env.DATABASE_PATH || "database/light-news.db");
+  const isLambda = Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.LAMBDA_TASK_ROOT);
 
-  if (isServerless) {
+  let databasePath = defaultPath;
+
+  if (isLambda) {
     const tmpDb = "/tmp/light-news.db";
     if (!existsSync(tmpDb)) {
       const candidates = [
-        path.resolve(process.cwd(), "database/light-news.db"),
+        defaultPath,
         path.resolve(process.cwd(), "light-version/database/light-news.db"),
         path.resolve(process.cwd(), "../database/light-news.db"),
         path.resolve(process.env.LAMBDA_TASK_ROOT || "", "database/light-news.db"),
         path.resolve(process.env.LAMBDA_TASK_ROOT || "", "light-version/database/light-news.db"),
         path.resolve(process.env.LAMBDA_TASK_ROOT || "", "src/database/light-news.db"),
-        path.resolve(process.env.LAMBDA_TASK_ROOT || "", ".next/server/database/light-news.db"),
-        path.resolve(__dirname, "database/light-news.db"),
-        path.resolve(__dirname, "../database/light-news.db"),
-        path.resolve(__dirname, "../../database/light-news.db"),
-        path.resolve(__dirname, "../../../database/light-news.db")
+        path.resolve(process.env.LAMBDA_TASK_ROOT || "", ".next/server/database/light-news.db")
       ];
       for (const candidate of candidates) {
         if (existsSync(candidate)) {
@@ -52,7 +50,25 @@ function initDatabase(): DatabaseSync {
     } catch {}
   }
 
-  const dbInstance = new DatabaseSync(databasePath);
+  let dbInstance: DatabaseSync;
+  try {
+    dbInstance = new DatabaseSync(databasePath);
+  } catch (openErr) {
+    const tmpDb = "/tmp/light-news.db";
+    if (databasePath !== tmpDb) {
+      try {
+        if (!existsSync(tmpDb) && existsSync(databasePath)) {
+          copyFileSync(databasePath, tmpDb);
+        }
+        dbInstance = new DatabaseSync(tmpDb);
+      } catch {
+        throw openErr;
+      }
+    } else {
+      throw openErr;
+    }
+  }
+
   try {
     dbInstance.exec("PRAGMA busy_timeout=30000; PRAGMA foreign_keys=ON;");
     const journalMode = dbInstance.prepare("PRAGMA journal_mode").get() as { journal_mode: string };

@@ -25,9 +25,6 @@ const nextConfig={
       {key:"X-Content-Type-Options",value:"nosniff"}
     ]}];
   },
-  outputFileTracingIncludes:{
-    "/**":["./database/light-news.db"]
-  },
   outputFileTracingExcludes:{"*":["../legacy-original/**"]}
 };
 export default nextConfig;
