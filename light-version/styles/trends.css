@@ -311,52 +311,103 @@
 
 .circulated-thumb-wrap {
   position: relative;
-  height: 140px;
+  height: 156px;
   background: var(--surface-2);
   overflow: hidden;
+  border-bottom: 1px solid var(--line);
 }
 
 .circulated-thumb-wrap img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.35s ease;
+  display: block;
 }
 
 .circulated-card:hover .circulated-thumb-wrap img {
-  transform: scale(1.04);
+  transform: scale(1.05);
 }
 
+/* Floating Rank Badge on image (top-left in RTL to not overlap title reading path) */
 .circulated-rank-badge {
   position: absolute;
   top: 10px;
-  right: 10px;
-  background: rgba(16, 42, 67, 0.85);
-  backdrop-filter: blur(4px);
-  color: #fff;
-  padding: 3px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+  left: 10px;
+  right: auto;
+  z-index: 2;
+  background: linear-gradient(135deg, rgba(15, 39, 68, 0.92), rgba(30, 58, 95, 0.92));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
   font-weight: 800;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  letter-spacing: 0.5px;
+  pointer-events: none;
 }
 
 .circulated-body {
-  padding: 12px 14px;
+  padding: 14px 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  gap: 10px;
 }
 
+/* Rank & Category metadata row above title */
+.circulated-meta-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.circulated-rank-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(2, 132, 199, 0.2);
+}
+
+.circulated-category-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--surface-2);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+
+.circulated-body .circulated-title,
 .circulated-body strong {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.65;
   color: var(--text);
-  margin-bottom: 10px;
+  margin: 0;
+  text-decoration: none;
+}
+
+.circulated-card:hover .circulated-title,
+.circulated-card:hover strong {
+  color: var(--primary, #0284c7);
 }
 
 .circulated-footer {
@@ -366,12 +417,12 @@
   font-size: 11px;
   color: var(--muted);
   border-top: 1px solid var(--line);
-  padding-top: 8px;
-  margin-top: 8px;
+  padding-top: 10px;
+  margin-top: auto;
 }
 
 .circulated-source {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--navy);
 }
 
@@ -640,11 +691,22 @@
 [data-theme="dark"] .circulated-card:hover {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
 }
-[data-theme="dark"] .circulated-body strong {
+[data-theme="dark"] .circulated-body strong,
+[data-theme="dark"] .circulated-body .circulated-title {
   color: var(--text);
 }
 [data-theme="dark"] .circulated-source {
   color: #64bfe8;
+}
+[data-theme="dark"] .circulated-rank-pill {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+[data-theme="dark"] .circulated-category-pill {
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 [data-theme="dark"] .social-stream-section {
   background: var(--surface);

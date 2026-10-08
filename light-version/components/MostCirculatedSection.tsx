@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import NewsImage from "@/components/NewsImage";
 import type { Article } from "@/types/news";
 
 export default function MostCirculatedSection({
@@ -27,7 +27,7 @@ export default function MostCirculatedSection({
 
       <div className="circulated-grid">
         {articles.slice(0, 4).map((article, index) => {
-          const thumbnail = article.imageUrl || article.imageOriginalUrl || "/images/placeholder.svg";
+          const thumbnail = article.imageUrl || article.imageOriginalUrl || "";
 
           return (
             <Link
@@ -36,22 +36,29 @@ export default function MostCirculatedSection({
               className="circulated-card"
             >
               <div className="circulated-thumb-wrap">
-                <Image
+                <NewsImage
                   src={thumbnail}
-                  alt={article.title}
-                  width={340}
-                  height={190}
+                  alt=""
+                  category={article.category}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   loading="lazy"
-                  unoptimized={thumbnail.startsWith("http")}
                 />
-                <span className="circulated-rank-badge">#{index + 1}</span>
+                <span className="circulated-rank-badge" aria-label={`المرتبة ${index + 1}`}>
+                  #{index + 1}
+                </span>
               </div>
 
               <div className="circulated-body">
-                <strong>{article.title}</strong>
+                <div className="circulated-meta-top">
+                  <span className="circulated-rank-pill">#{index + 1} الأكثر قراءة</span>
+                  <span className="circulated-category-pill">{article.category}</span>
+                </div>
+
+                <strong className="circulated-title">{article.title}</strong>
 
                 <div className="circulated-footer">
-                  <span className="circulated-source">{article.sourceName} • {article.category}</span>
+                  <span className="circulated-source">{article.sourceName}</span>
                   <time dateTime={article.sourcePublishedAt}>
                     {new Date(article.sourcePublishedAt).toLocaleString("ar-SA", {
                       timeZone: timezone,

@@ -80,6 +80,7 @@ export default function SocialStreamSection({
                           width={42}
                           height={42}
                           unoptimized
+                          referrerPolicy="no-referrer"
                         />
                       ) : (
                         <span>{post.authorName ? post.authorName.charAt(0) : "𝕏"}</span>
@@ -130,6 +131,7 @@ export default function SocialStreamSection({
                       height={260}
                       loading="lazy"
                       unoptimized={mediaUrl.startsWith("http")}
+                      referrerPolicy="no-referrer"
                     />
                     {post.mediaType === "video" ? (
                       <span className="media-type-tag">▶ فيديو / ريلز</span>
