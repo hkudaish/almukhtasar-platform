@@ -13,10 +13,39 @@ interface PostVideoPlayerProps {
 }
 
 const DEFAULT_VIDEO_FALLBACKS: Record<string, string> = {
-  energy: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-  tech: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-  default: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+  energy: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+  tech: "https://vjs.zencdn.net/v/oceans.mp4",
+  default: "https://media.w3.org/2010/05/sintel/trailer.mp4",
 };
+
+const isImageFile = (url: string) =>
+  /\.(jpe?g|png|webp|gif|svg|avif)(\?.*)?$/i.test(url) ||
+  url.includes("images.unsplash.com") ||
+  url.includes("cdn-cgi/image") ||
+  url.includes("media.sabq.org") ||
+  url.includes("cdn.ajel.sa");
+
+const isDirectVideo = (url: string) =>
+  /\.(mp4|webm|m3u8|ogv|mov)(\?.*)?$/i.test(url) ||
+  url.includes("vjs.zencdn.net") ||
+  url.includes("interactive-examples.mdn.mozilla.net") ||
+  url.includes("w3.org");
+
+function resolveVideoUrl(rawUrl?: string | null, cat = "عام"): string {
+  if (rawUrl && typeof rawUrl === "string" && rawUrl.trim() !== "") {
+    const trimmed = rawUrl.trim();
+    if (isDirectVideo(trimmed) && !isImageFile(trimmed)) {
+      return trimmed;
+    }
+  }
+  if (cat.includes("طاقة") || cat.includes("الخضراء") || cat.includes("بيئة") || cat.includes("منصات") || cat.includes("سكاكا")) {
+    return DEFAULT_VIDEO_FALLBACKS.energy;
+  }
+  if (cat.includes("تقنية") || cat.includes("حوسبة") || cat.includes("ذكاء")) {
+    return DEFAULT_VIDEO_FALLBACKS.tech;
+  }
+  return DEFAULT_VIDEO_FALLBACKS.default;
+}
 
 export default function PostVideoPlayer({
   videoUrl,
@@ -29,21 +58,7 @@ export default function PostVideoPlayer({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [hasVideoError, setHasVideoError] = useState<boolean>(false);
 
-  // Determine actual video URL
-  const cleanVideoUrl =
-    videoUrl &&
-    typeof videoUrl === "string" &&
-    videoUrl.trim() !== "" &&
-    (videoUrl.includes(".mp4") ||
-      videoUrl.includes(".webm") ||
-      videoUrl.includes("commondatastorage") ||
-      videoUrl.startsWith("http"))
-      ? videoUrl.trim()
-      : category.includes("طاقة") || category.includes("الخضراء") || category.includes("بيئة")
-      ? DEFAULT_VIDEO_FALLBACKS.energy
-      : category.includes("تقنية") || category.includes("ذكاء")
-      ? DEFAULT_VIDEO_FALLBACKS.tech
-      : DEFAULT_VIDEO_FALLBACKS.default;
+  const cleanVideoUrl = resolveVideoUrl(videoUrl, category);
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -53,7 +68,10 @@ export default function PostVideoPlayer({
 
   if (isPlaying && !hasVideoError) {
     return (
-      <div className={`post-video-container playing ${className}`}>
+      <div
+        className={`post-video-container playing ${className}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <video
           src={cleanVideoUrl}
           controls
