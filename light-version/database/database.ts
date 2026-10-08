@@ -543,6 +543,7 @@ function repairPoliticalPublishingBacklog(){
   void result;
 }
 repairPoliticalPublishingBacklog();
+runArchiveLifecycle();
 
 function articleFromRow(row:Record<string,unknown>):Article{
   const rawContent=jsonArray(row.content);
