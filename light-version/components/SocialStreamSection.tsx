@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import NewsImage from "@/components/NewsImage";
+import PostVideoPlayer from "@/components/PostVideoPlayer";
 import type { SocialPost } from "@/types/news";
 
 export default function SocialStreamSection({
@@ -125,21 +126,31 @@ export default function SocialStreamSection({
 
                 {mediaUrl ? (
                   <div className="social-card-media">
-                    <NewsImage
-                      src={mediaUrl}
-                      alt={post.content.slice(0, 50)}
-                      width={500}
-                      height={260}
-                      loading="lazy"
-                      category="منصات"
-                      fallbackSrc="/api/media/fallback/منصات"
-                      style={{ objectFit: "cover", width: "100%", height: "100%" }}
-                    />
                     {post.mediaType === "video" ? (
-                      <span className="media-type-tag">▶ فيديو / ريلز</span>
-                    ) : post.mediaType === "album" ? (
-                      <span className="media-type-tag">📷 ألبوم صور</span>
-                    ) : null}
+                      <PostVideoPlayer
+                        videoUrl={post.videoUrl || mediaUrl}
+                        posterUrl={post.thumbnailUrl || mediaUrl}
+                        alt={post.content.slice(0, 50)}
+                        category="منصات"
+                        title={post.content.slice(0, 40)}
+                      />
+                    ) : (
+                      <>
+                        <NewsImage
+                          src={mediaUrl}
+                          alt={post.content.slice(0, 50)}
+                          width={500}
+                          height={260}
+                          loading="lazy"
+                          category="منصات"
+                          fallbackSrc="/api/media/fallback/منصات"
+                          style={{ objectFit: "cover", width: "100%", height: "100%" }}
+                        />
+                        {post.mediaType === "album" ? (
+                          <span className="media-type-tag">📷 ألبوم صور</span>
+                        ) : null}
+                      </>
+                    )}
                   </div>
                 ) : null}
 

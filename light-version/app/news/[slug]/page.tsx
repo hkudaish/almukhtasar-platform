@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import NewsRow from "@/components/NewsRow";
 import NewsImage from "@/components/NewsImage";
+import PostVideoPlayer from "@/components/PostVideoPlayer";
 import ArticleActions from "@/components/ArticleActions";
 import ArticleAd from "@/components/ArticleAd";
 import { getArticle, relatedArticles } from "@/database/database";
@@ -141,7 +142,18 @@ export default async function ArticlePage({
                 </time>
               ) : null}
             </div>
-            {featured ? (
+            {article.videoUrl ? (
+              <figure className="featured-image featured-video" data-original-image={article.imageOriginalUrl}>
+                <PostVideoPlayer
+                  videoUrl={article.videoUrl}
+                  posterUrl={featured}
+                  alt={article.imageAlt || article.title}
+                  category={article.category}
+                  title={article.title}
+                />
+                {caption ? <figcaption>{caption}</figcaption> : null}
+              </figure>
+            ) : featured ? (
               <figure className="featured-image" data-original-image={article.imageOriginalUrl}>
                 <NewsImage
                   src={featured}

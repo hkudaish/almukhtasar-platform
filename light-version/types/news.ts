@@ -14,6 +14,7 @@ export type Article={
   sourceName:string;sourceUrl:string;canonicalUrl:string;author:string;region:string;
   sourcePublishedAt:string;sourceUpdatedAt:string|null;retrievedAt:string;
   imageUrl:string;imageOriginalUrl:string;imageAlt:string;imageCaption:string;imageCredit:string;imageWidth:number|null;imageHeight:number|null;imageStatus:string;
+  videoUrl?:string|null;
   publicationStatus:PublicationStatus;archiveStatus:ArchiveStatus;badge:string|null;updatedAt:string;
   geographicRelevance:GeographicRelevance;importanceLevel:ImportanceLevel;priorityScore:number;manualPriorityOverride:number|null;homepagePinned:boolean;homepageExcluded:boolean;
   isBreaking:boolean;breakingSource:string;breakingDetectedBy:BreakingDetectionMethod|null;breakingVerifiedAt:string|null;breakingExpiresAt:string|null;
@@ -69,6 +70,7 @@ export type SocialPost = {
   publishedAt: string;
   mediaType: "text" | "image" | "video" | "album";
   mediaUrls: string[];
+  videoUrl?: string | null;
   thumbnailUrl: string;
   likesCount: number;
   repostsCount: number;
