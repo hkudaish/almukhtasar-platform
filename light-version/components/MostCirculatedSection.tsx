@@ -51,7 +51,7 @@ export default function MostCirculatedSection({
 
               <div className="circulated-body">
                 <div className="circulated-meta-top">
-                  <span className="circulated-rank-pill">#{index + 1} الأكثر قراءة</span>
+                  <span className="circulated-rank-pill">الأكثر قراءة</span>
                   <span className="circulated-category-pill">{article.category}</span>
                 </div>
 

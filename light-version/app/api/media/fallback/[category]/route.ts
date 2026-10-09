@@ -48,7 +48,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ category: 
   const label = escape(rawCat || "الأخبار");
   const [c1, c2, c3] = theme.colors;
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360" preserveAspectRatio="xMidYMid slice">
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360" preserveAspectRatio="xMidYMid slice" direction="rtl" xml:lang="ar">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="${c1}" />
@@ -70,20 +70,20 @@ export async function GET(_: Request, { params }: { params: Promise<{ category: 
   <rect width="640" height="360" fill="url(#grid)" />
 
   <!-- Center Graphic -->
-  <g transform="translate(320, 155)">
+  <g transform="translate(320, 145)">
     <!-- Outer Glow Ring -->
     <circle r="46" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.25" />
     <circle r="38" fill="rgba(0, 0, 0, 0.25)" />
 
     <!-- Category Emoji / Icon -->
-    <text y="14" text-anchor="middle" font-size="34">${theme.icon}</text>
+    <text y="12" text-anchor="middle" font-size="34">${theme.icon}</text>
 
     <!-- Platform Name -->
-    <text y="78" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Cairo', sans-serif" font-size="24" font-weight="800" letter-spacing="0.5">المُخْتَصَر</text>
+    <text y="72" text-anchor="middle" fill="#ffffff" font-family="'Cairo', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Traditional Arabic', sans-serif" font-size="26" font-weight="800">المختصر</text>
 
     <!-- Category Pill -->
-    <rect x="-80" y="98" width="160" height="28" rx="14" fill="rgba(255, 255, 255, 0.16)" stroke="rgba(255, 255, 255, 0.3)" stroke-width="1" />
-    <text y="117" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Cairo', sans-serif" font-size="13" font-weight="700">${label}</text>
+    <rect x="-85" y="92" width="170" height="30" rx="15" fill="rgba(255, 255, 255, 0.18)" stroke="rgba(255, 255, 255, 0.35)" stroke-width="1" />
+    <text y="112" text-anchor="middle" fill="#ffffff" font-family="'Cairo', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Traditional Arabic', sans-serif" font-size="14" font-weight="700">${label}</text>
   </g>
 </svg>`;
 
