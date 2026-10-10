@@ -17,6 +17,7 @@ export interface RawSocialItem {
   publishedAt: string;
   mediaType?: "text" | "image" | "video" | "album";
   mediaUrls?: string[];
+  videoUrl?: string;
   thumbnailUrl?: string;
   likesCount?: number;
   repostsCount?: number;
@@ -42,10 +43,11 @@ export async function normalizeSocialPost(raw: RawSocialItem): Promise<SocialPos
 
   let mediaType: "text" | "image" | "video" | "album" = raw.mediaType || "text";
   let mediaUrls = raw.mediaUrls || [];
+  let videoUrl = raw.videoUrl || (mediaType === "video" ? mediaUrls[0] : undefined);
 
   // 3. Pre-verify video clips & reels playability before retrieval
   if (mediaType === "video") {
-    const videoTarget = mediaUrls[0] || raw.url;
+    const videoTarget = videoUrl || mediaUrls[0] || raw.url;
     const verification = await verifyVideoPlayability(videoTarget, raw.url);
 
     if (!verification.playable) {
@@ -53,13 +55,17 @@ export async function normalizeSocialPost(raw: RawSocialItem): Promise<SocialPos
       const hasImage = mediaUrls.some((url) => /\.(jpe?g|png|webp|gif|svg|avif)(\?.*)?$/i.test(url) || url.includes("images.unsplash.com"));
       if (hasImage) {
         mediaType = "image";
+        videoUrl = undefined;
       } else if (raw.content.trim().length >= 25) {
         mediaType = "text";
         mediaUrls = [];
+        videoUrl = undefined;
       } else {
         // Unplayable reels clip with no usable content fallback -> Reject retrieval
         return null;
       }
+    } else {
+      videoUrl = verification.resolvedUrl || videoTarget;
     }
   }
 
@@ -91,6 +97,7 @@ export async function normalizeSocialPost(raw: RawSocialItem): Promise<SocialPos
     publishedAt: raw.publishedAt || now,
     mediaType,
     mediaUrls,
+    videoUrl: videoUrl || null,
     thumbnailUrl: raw.thumbnailUrl || (mediaUrls[0] || ""),
     likesCount: likes,
     repostsCount: reposts,
@@ -162,7 +169,9 @@ export async function collectSocialPosts(): Promise<{
       url: "https://x.com/alekhbariyatv/status/1891002",
       publishedAt: makeDate(3),
       mediaType: "video",
-      mediaUrls: ["https://images.unsplash.com/photo-1518770660439-4636190af475?w=800"],
+      mediaUrls: ["https://vjs.zencdn.net/v/oceans.mp4"],
+      videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
+      thumbnailUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800",
       likesCount: 3120,
       repostsCount: 1140,
       repliesCount: 210,
@@ -228,7 +237,8 @@ export async function collectSocialPosts(): Promise<{
       url: "https://instagram.com/reel/99202",
       publishedAt: makeDate(5),
       mediaType: "video",
-      mediaUrls: ["https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800"],
+      mediaUrls: ["https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"],
+      videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
       thumbnailUrl: "https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800",
       likesCount: 15400,
       repliesCount: 620,

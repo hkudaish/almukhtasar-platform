@@ -31,20 +31,14 @@ const isDirectVideo = (url: string) =>
   url.includes("interactive-examples.mdn.mozilla.net") ||
   url.includes("w3.org");
 
-function resolveVideoUrl(rawUrl?: string | null, cat = "عام"): string {
+function resolveVideoUrl(rawUrl?: string | null): string {
   if (rawUrl && typeof rawUrl === "string" && rawUrl.trim() !== "") {
     const trimmed = rawUrl.trim();
-    if (isDirectVideo(trimmed) && !isImageFile(trimmed)) {
+    if (!isImageFile(trimmed)) {
       return trimmed;
     }
   }
-  if (cat.includes("طاقة") || cat.includes("الخضراء") || cat.includes("بيئة") || cat.includes("منصات") || cat.includes("سكاكا")) {
-    return DEFAULT_VIDEO_FALLBACKS.energy;
-  }
-  if (cat.includes("تقنية") || cat.includes("حوسبة") || cat.includes("ذكاء")) {
-    return DEFAULT_VIDEO_FALLBACKS.tech;
-  }
-  return DEFAULT_VIDEO_FALLBACKS.default;
+  return "";
 }
 
 export default function PostVideoPlayer({
@@ -58,15 +52,19 @@ export default function PostVideoPlayer({
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [hasVideoError, setHasVideoError] = useState<boolean>(false);
 
-  const cleanVideoUrl = resolveVideoUrl(videoUrl, category);
+  const cleanVideoUrl = resolveVideoUrl(videoUrl);
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsPlaying(true);
+    if (cleanVideoUrl) {
+      setIsPlaying(true);
+    } else {
+      setHasVideoError(true);
+    }
   };
 
-  if (isPlaying && !hasVideoError) {
+  if (isPlaying && cleanVideoUrl && !hasVideoError) {
     return (
       <div
         className={`post-video-container playing ${className}`}
