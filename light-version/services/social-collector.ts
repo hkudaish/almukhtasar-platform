@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { isArabicText, isSourceBoilerplate, normalizeArabic } from "@/lib/content-policy";
 import { extractHashtags } from "@/lib/trend-engine";
 import { insertSocialPost, listSocialPosts } from "@/database/database";
+import { verifyVideoPlayability } from "@/services/video-verifier";
 import type { SocialPost } from "@/types/news";
 
 export interface RawSocialItem {
@@ -26,9 +27,9 @@ export interface RawSocialItem {
 
 /**
  * Normalizes and validates incoming raw social items into the Almokhtasar SocialPost schema.
- * Rejects any post that is NOT in Arabic.
+ * Rejects any post that is NOT in Arabic or has unplayable video clips/reels.
  */
-export function normalizeSocialPost(raw: RawSocialItem): SocialPost | null {
+export async function normalizeSocialPost(raw: RawSocialItem): Promise<SocialPost | null> {
   // 1. Strict Arabic validation (Minimum 6 Arabic characters, majority Arabic)
   if (!isArabicText(raw.content, 6)) {
     return null;
@@ -37,6 +38,29 @@ export function normalizeSocialPost(raw: RawSocialItem): SocialPost | null {
   // 2. Strict rejection of source profiles, slogans, and boilerplates
   if (isSourceBoilerplate(raw.content)) {
     return null;
+  }
+
+  let mediaType: "text" | "image" | "video" | "album" = raw.mediaType || "text";
+  let mediaUrls = raw.mediaUrls || [];
+
+  // 3. Pre-verify video clips & reels playability before retrieval
+  if (mediaType === "video") {
+    const videoTarget = mediaUrls[0] || raw.url;
+    const verification = await verifyVideoPlayability(videoTarget, raw.url);
+
+    if (!verification.playable) {
+      // If video is not playable, check if there's a valid image fallback
+      const hasImage = mediaUrls.some((url) => /\.(jpe?g|png|webp|gif|svg|avif)(\?.*)?$/i.test(url) || url.includes("images.unsplash.com"));
+      if (hasImage) {
+        mediaType = "image";
+      } else if (raw.content.trim().length >= 25) {
+        mediaType = "text";
+        mediaUrls = [];
+      } else {
+        // Unplayable reels clip with no usable content fallback -> Reject retrieval
+        return null;
+      }
+    }
   }
 
   const hashtags = raw.hashtags?.length
@@ -48,9 +72,6 @@ export function normalizeSocialPost(raw: RawSocialItem): SocialPost | null {
   const replies = raw.repliesCount || 0;
   const views = raw.viewsCount || 0;
 
-  // Compute composite engagement score:
-  // For X: reposts * 2 + likes * 0.5 + replies * 1.0 + views * 0.05
-  // For IG: comments(replies) * 2 + likes * 0.5 + views * 0.1
   const engagementScore = raw.platform === "x"
     ? Math.round(reposts * 2.0 + likes * 0.5 + replies * 1.0 + views * 0.05)
     : Math.round(replies * 2.0 + likes * 0.5 + views * 0.1);
@@ -68,15 +89,15 @@ export function normalizeSocialPost(raw: RawSocialItem): SocialPost | null {
     content: raw.content.trim(),
     url: raw.url,
     publishedAt: raw.publishedAt || now,
-    mediaType: raw.mediaType || "text",
-    mediaUrls: raw.mediaUrls || [],
-    thumbnailUrl: raw.thumbnailUrl || (raw.mediaUrls?.[0] || ""),
+    mediaType,
+    mediaUrls,
+    thumbnailUrl: raw.thumbnailUrl || (mediaUrls[0] || ""),
     likesCount: likes,
     repostsCount: reposts,
     repliesCount: replies,
     viewsCount: views,
     engagementScore,
-    trendScore: engagementScore, // Will be updated by trend engine
+    trendScore: engagementScore,
     hashtags,
     language: "ar",
     sentiment: "neutral",
@@ -247,7 +268,7 @@ export async function collectSocialPosts(): Promise<{
   let rejectedNonArabic = 0;
 
   for (const item of seedItems) {
-    const post = normalizeSocialPost(item);
+    const post = await normalizeSocialPost(item);
     if (!post) {
       rejectedNonArabic++;
       continue;
